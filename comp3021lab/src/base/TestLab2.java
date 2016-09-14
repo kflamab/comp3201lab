@@ -11,7 +11,7 @@ public class TestLab2 {
 		if (b) numSucceed++;
 		b = nb.createImageNote("life", "selfie");
 		if (b) numSucceed++;
-		/*b = nb.createTextNote("life", "dinner");
+		b = nb.createTextNote("life", "dinner");
 		if (b) numSucceed++;
 		b = nb.createTextNote("life", "breakfast");
 		if (b) numSucceed++;
@@ -33,11 +33,10 @@ public class TestLab2 {
 		b = nb.createTextNote("study", "Biology");
 		if (b) numSucceed++;
 		b = nb.createTextNote("study", "Photography");
-		if (b) numSucceed++;*/
+		if (b) numSucceed++;
 		
 		System.out.println("Successfully created " + numSucceed + " notes");
 		for(Folder f : nb.getFolders()){
-			System.out.println("the size of folders is " + nb.getFolders().size());
 			System.out.println(f.toString());
 		}
 	}
