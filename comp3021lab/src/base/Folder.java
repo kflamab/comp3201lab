@@ -102,56 +102,122 @@ public class Folder implements Comparable<Folder>, Serializable{
 		}
 	}
 	
-	public ArrayList<Note> searchNote (String keywords){
+	private ArrayList<String[]> getOrConditionPair (String [] spiltKeyword){
 		
+		ArrayList<String[]> result = new ArrayList<String[]> ();
 		
-		keywords = keywords.toLowerCase();
-		//System.out.println("Print out the keywords: " + keywords);
-		String keyPair [] = keywords.split(" ");
-	
-		ArrayList <String []> or_condition = new ArrayList <String []> ();
-		
-		ArrayList<Note> result = new ArrayList<Note> ();
-		
-		
-		
-		for (int i=0; i < keyPair.length; i++){
+		for (int i=0; i < spiltKeyword.length; i++){
 			
-			if(keyPair[i].equals("or")){
+			if(spiltKeyword[i].equals("or")){
 				
-				String pairs [] = {keyPair[i-1],keyPair[i+1] };
-				or_condition.add(pairs);
+				String [] pairs = new String[2];
+				pairs[0] = spiltKeyword[i-1];
+				pairs[1] = spiltKeyword[i+1];
+				
+				result.add(pairs);
+				
 			}
+			
 		}
 		
-		/*System.out.println("Print out the or_condition array of array:");
-		for (int i=0; i < or_condition.size(); i++){
-			
-		System.out.println(or_condition.get(i)[0] + " " + or_condition.get(i)[1]);
-			
-		}*/
+		return result;
 		
+	}
+	
+	private String[] getTheSpiltKeyword (String keywords){
 		
+		String lowCaseKeyWord = keywords.toLowerCase();
+		String [] spiltKeyword = lowCaseKeyWord.split(" ");
+		
+		return spiltKeyword;
+		
+	}
+	
+	private int getTheNumberOfOr (String [] spiltKeyword){
+		
+		int counter = 0;
+		
+		for (String keyword : spiltKeyword){
+			
+			if(keyword.equals("or")){
+				
+				
+				counter++;
+			}
+			
+		}
+		
+		return counter;
+	}
+	
+	public ArrayList<Note> searchNote (String keywords){
+		
+		String [] spiltKeyword = getTheSpiltKeyword(keywords);
+		int numberOfOr = getTheNumberOfOr(spiltKeyword);
+//		System.out.println("num of or = " + numberOfOr);
+//		System.out.println("is match? " + (spiltKeyword.length - numberOfOr - 1));
+//		System.out.println("length = " + spiltKeyword.length);
+//		System.out.println("num of keyword = " + (spiltKeyword.length - numberOfOr) );
+		ArrayList<Note> result = new ArrayList<Note> ();
 		
 		for (Note eachNote : notes){
 			
-			boolean foundInImageNote = true;
+			boolean foundInImageNote = false;
+			
 			
 			if(eachNote instanceof ImageNote){
 				
-				for (int i=0; i < or_condition.size(); i++){
-					
-					if(eachNote.getTitle().toLowerCase().contains(or_condition.get(i)[0]) ||
-					eachNote.getTitle().toLowerCase().contains(or_condition.get(i)[1]) ){
+			
+				// just match one keyword
+				
+				if (numberOfOr == spiltKeyword.length - numberOfOr - 1 ){
+					//System.out.println("go to just one match");
+					for (int i=0; i < spiltKeyword.length; i++){
 						
-					/*System.out.println("The ImageNote title is " +  eachNote.getTitle() +
-						" and the key pairs are " + or_condition.get(i)[0] +" and " + or_condition.get(i)[1] + " ");*/
+							
+							if(eachNote.getTitle().toLowerCase().contains(spiltKeyword[i])){
+								
+								foundInImageNote = true;
+								break;
+							}
 						
-					}else{
-						/*System.out.println("Key pairs: "+ or_condition.get(i)[0] +" and " + or_condition.get(i)[1] + " is not contained"
-								+ " in ImageNote title: " + eachNote.getTitle());*/
-						foundInImageNote = false;
 					}
+					
+					
+				// must match all	
+				}else if(numberOfOr == 0){
+					
+					foundInImageNote = true;
+					
+					for (int i=0; i < spiltKeyword.length; i++){
+							
+							if(!eachNote.getTitle().toLowerCase().contains(spiltKeyword[i])){
+								
+								foundInImageNote = false;
+							}
+							
+							
+						}
+					
+					
+				}else{
+					
+					ArrayList<String[]> or_condition = getOrConditionPair(spiltKeyword);
+					
+					for (int i=0; i < or_condition.size(); i++){
+								
+							if (!eachNote.getTitle().toLowerCase().contains(or_condition.get(i)[0]) &&
+									!eachNote.getTitle().toLowerCase().contains(or_condition.get(i)[1]) ){
+								
+								foundInImageNote = false;
+								
+								}else{
+									
+									foundInImageNote = true;
+								}
+							
+					}		
+					
 				}
 				
 				if(foundInImageNote){
@@ -159,26 +225,79 @@ public class Folder implements Comparable<Folder>, Serializable{
 					result.add(eachNote);
 				}
 				
+				
 			}else if (eachNote instanceof TextNote){
 				
 				TextNote tempTextNote = (TextNote) eachNote;
+				boolean foundInTextNoteTitle = false;
 				
-				boolean foundInTextNoteTitle = true;
+				// just match one keyword
 				
-				for (int i=0; i < or_condition.size(); i++){
+				if (numberOfOr == spiltKeyword.length - numberOfOr - 1){
 					
-					if(tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[0]) ||
-							tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[1]) ){
+					for (int i=0; i < spiltKeyword.length; i++){
 						
-						/*System.out.println("The TextNote title is " +  eachNote.getTitle() +
-								" and the key pairs are " + or_condition.get(i)[0] +" and " + or_condition.get(i)[1] + " ");*/
+							
+							if(tempTextNote.getTitle().toLowerCase().contains(spiltKeyword[i]) ||
+									tempTextNote.getContent().toLowerCase().contains(spiltKeyword[i])){
+								
+								foundInTextNoteTitle = true;
+								break;
+							}
 						
-					}else{
-						/*System.out.println("Key pairs: "+ or_condition.get(i)[0] +" and " + or_condition.get(i)[1] + " is not contained"
-								+ " in TextNote title: " + eachNote.getTitle());*/
-						
-						foundInTextNoteTitle = false;
 					}
+					
+				}else if(numberOfOr == 0){
+					
+					foundInTextNoteTitle = true;
+					
+					for (int i=0; i < spiltKeyword.length; i++){
+							
+							if(!tempTextNote.getTitle().toLowerCase().contains(spiltKeyword[i]) &&
+									!tempTextNote.getContent().toLowerCase().contains(spiltKeyword[i])	){
+								
+								foundInTextNoteTitle = false;
+								break;
+								
+							}	
+						}
+				}else{
+					
+					ArrayList<String[]> or_condition = getOrConditionPair(spiltKeyword);
+					boolean findInOrcondition = true;
+					
+					for (int i=0; i < or_condition.size(); i++){
+								
+							if ( tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[0]) ||
+									tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[1])   ||
+									 tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[0]) ||
+									tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[1])  ){
+								
+								findInOrcondition = true;
+//								System.out.println("********  fail to find the TextNote of the name - " + tempTextNote.getTitle() + "**************");
+//								
+//								System.out.println("the result of searching " + or_condition.get(i)[0] + " in title is " + 
+//								tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[0])  );
+//								
+//								System.out.println("the result of searching " + or_condition.get(i)[1] + " in title is " + 
+//										tempTextNote.getTitle().toLowerCase().contains(or_condition.get(i)[1])  );
+//								
+//								System.out.println("the result of searching " + or_condition.get(i)[0] + " in content is " + 
+//										tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[0])  );
+//										
+//								System.out.println("the result of searching " + or_condition.get(i)[1] + " in title content is " + 
+//										tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[1])  );
+
+								
+								}else{
+									
+									findInOrcondition = false;
+									break;
+								}
+							
+					}		
+					foundInTextNoteTitle = findInOrcondition;
+					
 				}
 				
 				if(foundInTextNoteTitle){
@@ -186,34 +305,9 @@ public class Folder implements Comparable<Folder>, Serializable{
 					result.add(tempTextNote);
 				}
 				
-				boolean foundInTextNoteContent = true;
-				
-				for (int i=0; i < or_condition.size(); i++){
-					
-					
-					if(tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[0]) 
-							|| tempTextNote.getContent().toLowerCase().contains(or_condition.get(i)[1])){
-					
-						
-						
-					}else{
-						
-						 foundInTextNoteContent = false;
-					}
-					 
-					
-					
-				}
-				
-				
-				if(foundInTextNoteContent){
-					
-					result.add(tempTextNote);
-				}
-				
-			} // end of else - here the note is textNote
+			}// end of the else statement of if this is the textNote
 			
-		} //end of for loop
+		} //end of for loop of eachNote no matter what type of note it is
 		
 		
 		return result;
